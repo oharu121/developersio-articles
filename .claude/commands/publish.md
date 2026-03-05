@@ -57,7 +57,7 @@ CMAトークンを使って自動的に設定を検出・生成する:
 
 # 記事の公開手順
 
-1. 指定されたファイルを読み込み、YAML frontmatter（title, slug, tags, articleId）と本文を確認する
+1. 指定されたファイルを読み込み、YAML frontmatter（title, slug, tags, articleId, publishedAt）と本文を確認する
 2. `.claude/contentful-config.json` から Contentful の設定情報を読み込む
 3. frontmatter に `articleId` があるかどうかで **新規作成** か **更新** かを判定する
 
@@ -66,6 +66,7 @@ CMAトークンを使って自動的に設定を検出・生成する:
 1. 内容をユーザーに表示し、公開してよいか確認する
 2. `POST` で新規ドラフトエントリを作成する（詳細は「新規作成API仕様」参照）
 3. 成功したら、レスポンスから取得した `entry_id` を記事ファイルの frontmatter に `articleId` として書き戻す
+4. frontmatter に `publishedAt` がなければ、現在の日時（ISO 8601形式、例: `2026-03-05T12:00:00+09:00`）を `publishedAt` として追記する。既に `publishedAt` がある場合は変更しない
 
 ## 更新フロー（articleId あり）
 
@@ -144,6 +145,7 @@ CMAトークンを使って自動的に設定を検出・生成する:
 ## 新規作成の場合
 - ContentfulのエントリURLを表示: `https://app.contentful.com/spaces/{space_id}/entries/{entry_id}`
 - 記事ファイルの frontmatter に `articleId: {entry_id}` を追記する
+- frontmatter に `publishedAt` がなければ、現在の日時（ISO 8601形式、例: `2026-03-05T12:00:00+09:00`）を追記する
 
 ## 更新の場合
 - ContentfulのエントリURLを表示: `https://app.contentful.com/spaces/{space_id}/entries/{articleId}`

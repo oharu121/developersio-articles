@@ -5,6 +5,8 @@ tags:
   - Gemini
   - Google Workspace
   - RAG
+articleId: "5AwxgeDHzsPzPGjumKdZZl"
+publishedAt: "2026-03-05T12:00:00+09:00"
 ---
 
 ## はじめに

@@ -5,15 +5,16 @@
       "Bash(gh auth status)",
       "Bash(git tag v1.0.0)",
       "Bash(git push)",
+      "Bash(git add)",
       "Bash(git push --tags)",
       "Bash(gh issue close*)",
-      "Bash(gh api:*",
       "Bash(ls -d */)",
       "Bash(gh issue:*)",
       "Bash(git fetch)",
       "Bash(git rev-list --count HEAD..@{u})",
       "Bash(git tag:*)",
-      "Bash(gh release:*)"
+      "Bash(gh release:*)",
+      "Bash(python3:*)"
     ]
   }
 }
