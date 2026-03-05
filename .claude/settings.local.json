@@ -13,7 +13,9 @@
       "Bash(ls -d */)",
       "Bash(gh issue:*)",
       "Bash(git fetch)",
-      "Bash(git rev-list --count HEAD..@{u})"
+      "Bash(git rev-list --count HEAD..@{u})",
+      "Bash(git tag:*)",
+      "Bash(gh release:*)"
     ]
   }
 }
