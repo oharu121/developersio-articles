@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:www.contentful.com)",
-      "Bash(gh auth status)"
+      "Bash(gh auth status)",
+      "Bash(git tag v1.0.0)",
+      "Bash(git push)",
+      "Bash(git push --tags)",
+      "Bash(gh issue close*)"
     ]
   }
 }
