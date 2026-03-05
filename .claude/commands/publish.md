@@ -49,6 +49,7 @@ CMAトークンを使って自動的に設定を検出・生成する:
     "slug": "slug",
     "content": "content",
     "tags": "tags",
+    "excerpt": "excerpt",
     "author": "author",
     "language": "language"
   }
@@ -64,19 +65,25 @@ CMAトークンを使って自動的に設定を検出・生成する:
 ## 新規作成フロー（articleId なし）
 
 1. 内容をユーザーに表示し、公開してよいか確認する
-2. `POST` で新規ドラフトエントリを作成する（詳細は「新規作成API仕様」参照）
-3. 成功したら、レスポンスから取得した `entry_id` を記事ファイルの frontmatter に `articleId` として書き戻す
-4. frontmatter に `publishedAt` がなければ、現在の日時（ISO 8601形式、例: `2026-03-05T12:00:00+09:00`）を `publishedAt` として追記する。既に `publishedAt` がある場合は変更しない
+2. 記事本文から1-2文の概要文（excerpt）を生成し、AskUserQuestion でユーザーに提示する。ユーザーは承認、編集、または自分で書き直すことができる
+3. `POST` で新規ドラフトエントリを作成する（詳細は「新規作成API仕様」参照）。承認された excerpt もリクエストに含める
+4. 成功したら、レスポンスから取得した `entry_id` を記事ファイルの frontmatter に `articleId` として書き戻す
+5. frontmatter に `publishedAt` がなければ、現在の日時（ISO 8601形式、例: `2026-03-05T12:00:00+09:00`）を `publishedAt` として追記する。既に `publishedAt` がある場合は変更しない
 
 ## 更新フロー（articleId あり）
 
 1. `GET` で既存エントリの全データを取得する（詳細は「更新API仕様」参照）
 2. ローカルで変更されたフィールド（title, slug, content, tags）と、Contentful上の現在の値を比較し、差分をユーザーに表示する
-3. 以下の警告を表示する:
+3. 既存エントリの excerpt を確認し、AskUserQuestion でユーザーに以下を選択してもらう:
+   - 現在の excerpt をそのまま使う（現在の値を表示する）
+   - 更新された記事内容から新しい excerpt を再生成する
+   - 自分で書き直す
+   再生成を選んだ場合は、生成結果を提示して承認を得る
+4. 以下の警告を表示する:
 
-   > **注意**: Contentful上で直接編集した内容（thumbnail, excerpt, categories等）はそのまま保持されます。ローカルで管理しているフィールド（title, slug, content, tags）のみが更新されます。
+   > **注意**: Contentful上で直接編集した内容（thumbnail, categories等）はそのまま保持されます。ローカルで管理しているフィールド（title, slug, content, tags, excerpt）のみが更新されます。
 
-4. ユーザーの確認が取れたら、取得したエントリのフィールドにローカルの変更をマージして `PUT` で更新する
+5. ユーザーの確認が取れたら、取得したエントリのフィールドにローカルの変更をマージして `PUT` で更新する
 
 # 新規作成API仕様
 
@@ -95,6 +102,7 @@ CMAトークンを使って自動的に設定を検出・生成する:
     "slug": { "{locale}": "article-slug" },
     "content": { "{locale}": "Markdown本文" },
     "tags": { "{locale}": ["tag1", "tag2"] },
+    "excerpt": { "{locale}": "記事の概要文" },
     "language": { "{locale}": "ja" },
     "author": {
       "{locale}": {
@@ -126,8 +134,9 @@ CMAトークンを使って自動的に設定を検出・生成する:
 - `fields.slug`
 - `fields.content`
 - `fields.tags`
+- `fields.excerpt`
 
-それ以外のフィールド（thumbnail, excerpt, author, language, categories, targetLocales 等）は取得したデータをそのまま保持する。
+それ以外のフィールド（thumbnail, author, language, categories, targetLocales 等）は取得したデータをそのまま保持する。
 
 ## Step 3: 更新リクエスト
 
