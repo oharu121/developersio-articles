@@ -13,38 +13,56 @@ tags:
 
 そこで、Claude Codeのカスタムコマンド機能を使い、スラッシュコマンドだけで記事の下書き作成からContentfulへのドラフト投稿までを完結させるツールを作ってみました。
 
-本記事ではこのツールの仕組みと構築手順を紹介します。
+本記事ではこのツールの仕組みと、使い始めるまでの手順を紹介します。ツールのソースコードと生成された記事の実例はGitHubリポジトリで公開しています。
+
+https://github.com/oharu121/developersio-articles
 
 ## 作ったもの
 
-2つのカスタムコマンドを作成しました。
+3つのカスタムコマンドを作成しました。
 
 | コマンド | 機能 |
 |---------|------|
 | `/article <トピック>` | トピックを元に、ガイドラインに準拠した日本語の技術ブログ記事の下書きを生成 |
-| `/publish <ファイルパス>` | 指定した記事ファイルをContentfulにドラフトとして投稿 |
+| `/publish <ファイルパス>` | 指定した記事ファイルをContentfulにドラフトとして投稿（更新にも対応） |
+| `/release` | GitHub issue作成・タグ付け・リリース作成を自動化 |
+
+実際にこのツールで生成した記事の例もリポジトリに含まれています。
+
+- [`macos/open-with-vscode-from-finder-right-click-menu.md`](https://github.com/oharu121/developersio-articles/blob/main/macos/open-with-vscode-from-finder-right-click-menu.md) — Finderの右クリックメニューにVS Codeを追加する手順記事
 
 ## 前提・環境
 
-- Claude Code（CLI）がインストール済みであること
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)（CLI）がインストール済みであること
 - Contentfulアカウントがあり、CMA（Content Management API）トークンを発行できること
 - ブログのContent TypeがContentful上に定義済みであること
 
-## プロジェクト構成
+## セットアップ手順
+
+### 1. リポジトリをクローン
+
+```bash
+git clone https://github.com/oharu121/developersio-articles.git
+cd developersio-articles
+```
+
+クローンすると、`.claude/commands/` ディレクトリにあるコマンド定義ファイルがそのままClaude Codeのスラッシュコマンドとして使えるようになります。
+
+### 2. .envファイルを作成
+
+```bash
+cp .env.example .env
+```
+
+`.env` を編集して `CONTENTFUL_CMA_TOKEN` にCMAトークンを設定します。CMAトークンは [Contentfulの設定画面](https://app.contentful.com/account/profile/cma_tokens) から生成できます。
+
+### 3. 初回の/publishで設定を自動生成
 
 ```
-developersio-articles/
-├── .claude/
-│   ├── commands/
-│   │   ├── article.md      # /article コマンド定義
-│   │   └── publish.md      # /publish コマンド定義
-│   └── contentful-config.json  # Contentful接続設定（自動生成可）
-├── .env                     # CMAトークン（gitignore対象）
-├── .env.example             # テンプレート
-├── .gitignore
-└── <カテゴリフォルダ>/
-    └── <slug>.md            # 記事ファイル
+/publish <任意の記事ファイル>
 ```
+
+初回実行時にContentful APIから自動的に設定を検出し、`.claude/contentful-config.json` が生成されます。スペースの選択と著者プロフィールの選択を求められるので、指示に従ってください。2回目以降はこのステップはスキップされます。
 
 ## /article コマンドの仕組み
 
@@ -77,6 +95,7 @@ tags:
 - `title` — 日本語の記事タイトル
 - `slug` — URL用の英語キー（ファイル名にも使用）
 - `tags` — 記事に関連するタグのリスト
+- `articleId` — Contentfulのエントリ ID（`/publish` 後に自動追記）
 
 ### メディアガイドラインの組み込み
 
@@ -88,6 +107,8 @@ tags:
 - ディス（他製品・サービスの批判）を避ける
 - 憶測や伝聞ではなくソースに基づいた内容にする
 - 生成AIへの丸投げはせず、あくまでアシスタントとして使う
+
+コマンド定義の全文は [`.claude/commands/article.md`](https://github.com/oharu121/developersio-articles/blob/main/.claude/commands/article.md) で確認できます。
 
 ## /publish コマンドの仕組み
 
@@ -110,7 +131,7 @@ tags:
 
 この仕組みにより、2回目以降の実行では設定ファイルを読み込むだけでスキップされます。
 
-### 投稿フロー
+### 新規投稿フロー
 
 ```
 /publish macos/open-with-vscode-from-finder-right-click-menu.md
@@ -120,26 +141,25 @@ tags:
 
 1. 記事ファイルを読み込み、frontmatterからメタ情報を抽出
 2. 投稿内容をユーザーに表示して確認を取る
-3. Contentful Content Management APIにドラフトエントリを作成
-4. 成功時はContentfulのエントリURLを表示
-
-### API呼び出し
-
-Contentful CMAへのリクエストは以下の形式です。
-
-```
-POST https://api.contentful.com/spaces/{space_id}/environments/{environment_id}/entries
-```
-
-必要なヘッダー：
-
-```
-Authorization: Bearer {CMA_TOKEN}
-Content-Type: application/vnd.contentful.management.v1+json
-X-Contentful-Content-Type: blogPost
-```
+3. Contentful CMA APIに `POST` でドラフトエントリを作成
+4. 成功時はContentfulのエントリURLを表示し、`articleId` をfrontmatterに書き戻す
 
 Contentful CMAでは、エントリを作成するとデフォルトでドラフト状態になります。公開（Publish）するには別途APIを呼ぶ必要があるため、誤って公開してしまう心配はありません。
+
+### 更新フロー
+
+frontmatterに `articleId` がある記事に対して `/publish` を実行すると、新規作成ではなく更新が行われます。
+
+ここで重要なのは、Contentful CMAの更新API（`PUT`）は**全フィールドの送信が必要**という点です。送信しなかったフィールドは削除されます。つまり、Contentful上で直接設定したサムネイルやExcerptなどが消えてしまう可能性があります。
+
+そこで、更新時は「fetch-merge-put」パターンを採用しています。
+
+1. `GET /entries/{articleId}` で既存エントリの全データを取得
+2. ローカルで管理しているフィールド（title, slug, content, tags）のみ上書き
+3. それ以外のフィールド（thumbnail, excerpt, categories等）は取得したデータをそのまま保持
+4. `PUT /entries/{articleId}` に `X-Contentful-Version` ヘッダーを付けて更新
+
+これにより、Contentful UIで設定した内容を壊さずにローカルの変更だけを反映できます。
 
 ### CMAトークンに関する注意点
 
@@ -148,35 +168,40 @@ Contentful CMAトークンはスペースレベルのアクセスキーであり
 そのため：
 
 - トークンは `.env` に保管し、`.gitignore` で除外する
-- `contentful-config.json` に自分のAuthor IDを設定する
+- `contentful-config.json` に自分のAuthor IDを設定する（初回セットアップで自動設定）
 - トークンの共有・コミットは絶対に避ける
 
-## セットアップ手順
+コマンド定義の全文は [`.claude/commands/publish.md`](https://github.com/oharu121/developersio-articles/blob/main/.claude/commands/publish.md) で確認できます。
 
-このツールを自分の環境で使う手順です。
+## /release コマンド
 
-### 1. リポジトリをクローン
+リポジトリの変更をリリースするための自動化コマンドも用意しています。
 
-```bash
-git clone <リポジトリURL>
-cd developersio-articles
-```
+1. セッション中に行った作業からGitHub issueを自動作成（計画書とAcceptance Criteria付き）
+2. コミット・タグ付け・プッシュ
+3. GitHubリリースの作成
+4. issueのクローズ
 
-### 2. .envファイルを作成
+詳細は [`.claude/commands/release.md`](https://github.com/oharu121/developersio-articles/blob/main/.claude/commands/release.md) を参照してください。
 
-```bash
-cp .env.example .env
-```
-
-`.env` を編集して `CONTENTFUL_CMA_TOKEN` にCMAトークンを設定します。CMAトークンは [Contentfulの設定画面](https://app.contentful.com/account/profile/cma_tokens) から生成できます。
-
-### 3. 初回の/publishで設定を自動生成
+## プロジェクト構成
 
 ```
-/publish <任意の記事ファイル>
+developersio-articles/
+├── .claude/
+│   ├── commands/
+│   │   ├── article.md          # /article コマンド定義
+│   │   ├── publish.md          # /publish コマンド定義
+│   │   └── release.md          # /release コマンド定義
+│   └── contentful-config.json  # Contentful接続設定（自動生成、gitignore対象）
+├── .env                        # CMAトークン（gitignore対象）
+├── .env.example                # テンプレート
+├── .gitignore
+├── .plans/                     # リリース計画書
+├── README.md
+└── <カテゴリフォルダ>/
+    └── <slug>.md               # 記事ファイル
 ```
-
-初回実行時に `contentful-config.json` が自動生成されます。スペースの選択と著者プロフィールの選択を求められるので、指示に従ってください。
 
 ## 使い方の例
 
@@ -196,6 +221,16 @@ cp .env.example .env
 
 内容確認 → Contentfulにドラフト投稿 → エントリURLが表示されます。
 
+### 記事を更新する
+
+記事を編集した後、同じコマンドで更新できます。
+
+```
+/publish aws-lambda/try-aws-lambda-python312.md
+```
+
+frontmatterの `articleId` を見て自動的に更新フローが実行されます。Contentful上で設定したサムネイルなどはそのまま保持されます。
+
 ## まとめ
 
 Claude Codeのカスタムコマンド機能を使うことで、技術ブログの執筆ワークフローをかなりシンプルにできました。
@@ -204,7 +239,8 @@ Claude Codeのカスタムコマンド機能を使うことで、技術ブログ
 
 - **カスタムコマンドはMarkdownファイル1つで定義できる** — 外部スクリプトやパッケージ不要
 - **ガイドラインをコマンドに直接組み込める** — 記事品質を自動的に担保
-- **Contentful APIとの連携も可能** — CMAトークンさえあれば、ドラフト投稿まで自動化できる
+- **Contentful APIとの連携も可能** — CMAトークンさえあれば、ドラフト投稿・更新まで自動化できる
 - **初回セットアップの自動化** — 設定が存在しなければAPIから検出・生成する仕組みにより、他のメンバーも簡単に使い始められる
+- **更新時のデータ保護** — fetch-merge-putパターンでContentful上のフィールドを壊さない
 
-カスタムコマンドの定義ファイルは単なるMarkdownなので、ブログ以外の用途（ドキュメント生成、コードレビュー、デプロイ手順など）にも応用できます。
+ソースコードと生成例はすべて [GitHub リポジトリ](https://github.com/oharu121/developersio-articles) で公開しています。カスタムコマンドの定義ファイルは単なるMarkdownなので、自分のプロジェクトに合わせてカスタマイズしたり、ブログ以外の用途（ドキュメント生成、コードレビュー、デプロイ手順など）にも応用できます。

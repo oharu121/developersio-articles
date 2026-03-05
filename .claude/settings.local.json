@@ -9,7 +9,11 @@
       "Bash(gh issue close*)",
       "Bash(gh api user --jq '.name // .login')",
       "Bash(gh api user --jq '.email // empty')",
-      "Bash(gh api user/emails --jq '.[0].email')"
+      "Bash(gh api user/emails --jq '.[0].email')",
+      "Bash(ls -d */)",
+      "Bash(gh issue:*)",
+      "Bash(git fetch)",
+      "Bash(git rev-list --count HEAD..@{u})"
     ]
   }
 }
