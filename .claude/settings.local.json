@@ -16,7 +16,8 @@
       "Bash(git tag:*)",
       "Bash(gh release*)",
       "Bash(python3*)",
-      "Bash(gh label*)"
+      "Bash(gh label*)",
+      "Bash(git commit:*)"
     ]
   }
 }
