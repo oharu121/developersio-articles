@@ -1,0 +1,41 @@
+meta {
+  name: update-entry
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{base_url}}/spaces/{{space_id}}/environments/{{environment_id}}/entries/{{article_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cma_token}}
+}
+
+headers {
+  X-Contentful-Version: 1
+}
+
+body:json {
+  {
+    "fields": {
+      "title": {
+        "{{locale}}": "Article Title"
+      },
+      "slug": {
+        "{{locale}}": "article-slug"
+      },
+      "content": {
+        "{{locale}}": "Updated article content"
+      },
+      "tags": {
+        "{{locale}}": []
+      },
+      "excerpt": {
+        "{{locale}}": "Article excerpt"
+      }
+    }
+  }
+}

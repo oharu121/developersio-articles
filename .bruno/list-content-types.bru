@@ -1,0 +1,15 @@
+meta {
+  name: list-content-types
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base_url}}/spaces/{{space_id}}/environments/{{environment_id}}/content_types
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cma_token}}
+}

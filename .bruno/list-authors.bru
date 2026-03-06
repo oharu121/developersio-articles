@@ -1,0 +1,15 @@
+meta {
+  name: list-authors
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/spaces/{{space_id}}/environments/{{environment_id}}/entries?content_type=authorProfile&limit=100
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cma_token}}
+}

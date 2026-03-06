@@ -1,0 +1,53 @@
+meta {
+  name: create-entry
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/spaces/{{space_id}}/environments/{{environment_id}}/entries
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cma_token}}
+}
+
+headers {
+  X-Contentful-Content-Type: {{content_type_id}}
+}
+
+body:json {
+  {
+    "fields": {
+      "title": {
+        "{{locale}}": "Article Title"
+      },
+      "slug": {
+        "{{locale}}": "article-slug"
+      },
+      "content": {
+        "{{locale}}": "Article content in markdown"
+      },
+      "tags": {
+        "{{locale}}": []
+      },
+      "excerpt": {
+        "{{locale}}": "Article excerpt"
+      },
+      "language": {
+        "{{locale}}": "ja"
+      },
+      "author": {
+        "{{locale}}": {
+          "sys": {
+            "type": "Link",
+            "linkType": "Entry",
+            "id": "{{author_id}}"
+          }
+        }
+      }
+    }
+  }
+}

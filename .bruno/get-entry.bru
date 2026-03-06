@@ -1,0 +1,15 @@
+meta {
+  name: get-entry
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/spaces/{{space_id}}/environments/{{environment_id}}/entries/{{article_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cma_token}}
+}

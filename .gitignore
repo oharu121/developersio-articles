@@ -1,2 +1,3 @@
 .env
 .claude/contentful-config.json
+.bruno/collection.bru

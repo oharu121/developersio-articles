@@ -1,0 +1,15 @@
+meta {
+  name: list-spaces
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/spaces
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{cma_token}}
+}
