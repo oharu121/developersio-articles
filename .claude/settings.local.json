@@ -14,8 +14,9 @@
       "Bash(git fetch)",
       "Bash(git rev-list --count HEAD..@{u})",
       "Bash(git tag:*)",
-      "Bash(gh release:*)",
-      "Bash(python3:*)"
+      "Bash(gh release*)",
+      "Bash(python3*)",
+      "Bash(gh label*)"
     ]
   }
 }
